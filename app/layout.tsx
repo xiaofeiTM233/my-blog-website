@@ -1,18 +1,16 @@
 // app/layout.tsx
 import { AntdRegistry } from '@ant-design/nextjs-registry';
-import { ConfigProvider } from 'antd';
-import zhCN from 'antd/locale/zh_CN';
-import dayjs from 'dayjs';
 import type { Metadata } from 'next';
-import 'dayjs/locale/zh-cn';
 import './globals.css';
 import Layout from '@/components/Layout';
-
-dayjs.locale('zh-cn');
+import QueryProvider from '@/components/QueryProvider';
 
 export const metadata: Metadata = {
-  title: 'My Blog Website',
-  description: '这是一个基于 Next.js 的博客网站',
+  title: {
+    default: 'My Blog',
+    template: '%s · My Blog',
+  },
+  description: '一个把动态流、文章画廊等多个板块聚合在一起的社区站点',
 };
 
 export default function RootLayout({ children }: LayoutProps<'/'>) {
@@ -20,9 +18,9 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
     <html lang="zh-CN">
       <body>
         <AntdRegistry>
-          <ConfigProvider locale={zhCN}>
+          <QueryProvider>
             <Layout>{children}</Layout>
-          </ConfigProvider>
+          </QueryProvider>
         </AntdRegistry>
       </body>
     </html>

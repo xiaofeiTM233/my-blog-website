@@ -1,7 +1,16 @@
 // lib/models/Feed.ts
 import mongoose, { type Document, type Model, Schema } from 'mongoose';
+import {
+  FEED_PRIORITIES,
+  FEED_STATUSES,
+  FEED_TYPES,
+  type FeedPriority,
+  type FeedStatus,
+  type FeedType,
+} from '@/lib/feeds/constants';
 
 export interface ILog {
+  _id?: string;
   id?: string;
   timestamp: number;
   body?: string;
@@ -9,9 +18,9 @@ export interface ILog {
 
 export interface IMeta {
   channel: string;
-  type: 'system' | 'interaction' | 'transaction' | 'security' | 'activity' | 'other';
-  status: 'unread' | 'read' | 'deleted';
-  priority?: 'low' | 'normal' | 'high' | 'urgent';
+  type: FeedType;
+  status: FeedStatus;
+  priority?: FeedPriority;
   timestamp: number;
   expirein?: number;
 }
@@ -22,11 +31,12 @@ export interface IAuthor {
 }
 
 export interface IContent {
-  title: string;
+  title?: string;
   summary?: string;
   body?: string;
   author?: IAuthor;
   cover?: string;
+  images?: string[];
   tags?: string[];
   entities?: string[];
 }
@@ -44,27 +54,22 @@ export interface IFeed {
   extra?: Record<string, unknown>;
 }
 
-export interface IFeedDoc extends IFeed, Document {}
+export interface IFeedDoc extends IFeed, Document {
+  _id: mongoose.Types.ObjectId;
+}
 
-const LogSchema = new Schema<ILog>(
-  {
-    id: String,
-    timestamp: { type: Number, required: true },
-    body: String,
-  },
-  { _id: false },
-);
+const LogSchema = new Schema<ILog>({
+  id: String,
+  timestamp: { type: Number, required: true },
+  body: String,
+});
 
 const MetaSchema = new Schema<IMeta>(
   {
     channel: { type: String, required: true },
-    type: {
-      type: String,
-      enum: ['system', 'interaction', 'transaction', 'security', 'activity', 'other'],
-      required: true,
-    },
-    status: { type: String, enum: ['unread', 'read', 'deleted'], required: true },
-    priority: { type: String, enum: ['low', 'normal', 'high', 'urgent'], default: 'low' },
+    type: { type: String, enum: FEED_TYPES, required: true },
+    status: { type: String, enum: FEED_STATUSES, required: true },
+    priority: { type: String, enum: FEED_PRIORITIES, default: 'normal' },
     timestamp: { type: Number, required: true },
     expirein: Number,
   },
@@ -75,11 +80,12 @@ const AuthorSchema = new Schema<IAuthor>({ name: String, avatar: String }, { _id
 
 const ContentSchema = new Schema<IContent>(
   {
-    title: { type: String, required: true },
+    title: String,
     summary: String,
     body: String,
     author: { type: AuthorSchema, default: () => ({}) },
     cover: String,
+    images: [String],
     tags: [String],
     entities: [String],
   },
