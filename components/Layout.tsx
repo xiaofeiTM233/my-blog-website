@@ -1,7 +1,12 @@
 // components/Layout.tsx
 'use client';
 
-import { ControlOutlined, SendOutlined, UnorderedListOutlined } from '@ant-design/icons';
+import {
+  ControlOutlined,
+  EditOutlined,
+  SendOutlined,
+  UnorderedListOutlined,
+} from '@ant-design/icons';
 import type { MenuDataItem } from '@ant-design/pro-components';
 import { PageContainer, ProLayout } from '@ant-design/pro-components';
 import { App, ConfigProvider } from 'antd';
@@ -16,6 +21,7 @@ dayjs.locale('zh-cn');
 
 const menuData: MenuDataItem[] = [
   { path: '/feeds/index', name: '动态流', icon: <UnorderedListOutlined /> },
+  { path: '/editor', name: '写动态', icon: <EditOutlined /> },
   { path: '/feeds/manage', name: '内容管理', icon: <ControlOutlined /> },
 ];
 

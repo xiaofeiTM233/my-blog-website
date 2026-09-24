@@ -58,6 +58,27 @@ body {
   font-weight: 400;
 }
 
+/* 发布框的正文：原生 textarea，高度随内容增长 */
+.composer__area {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  padding: 4px 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  font-size: 15px;
+  line-height: 1.7;
+  resize: none;
+  overflow: hidden;
+}
+
+.composer__area::placeholder {
+  color: #bfbfbf;
+}
+
 /* md-editor-rt 的预览嵌进动态卡片时做紧凑化：排版交给它自带的 preview.css */
 .feed-md {
   background: transparent;

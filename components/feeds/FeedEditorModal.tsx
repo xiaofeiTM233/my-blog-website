@@ -2,6 +2,7 @@
 
 import { App as AntdApp, AutoComplete, Form, Input, Modal, Select, Space } from 'antd';
 import { useEffect, useState } from 'react';
+import MarkdownEditor from '@/components/editor/MarkdownEditor';
 import { feedsApi } from '@/lib/api/client';
 import {
   FEED_PRIORITIES,
@@ -16,7 +17,6 @@ import {
 } from '@/lib/feeds/constants';
 import type { FeedListItem } from '@/lib/feeds/types';
 import { useFeedOptions } from './FeedRails';
-import MarkdownEditor from './MarkdownEditor';
 
 interface Props {
   target: FeedListItem | 'create' | null;

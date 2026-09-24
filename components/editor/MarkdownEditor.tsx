@@ -10,7 +10,7 @@ interface Props {
   onChange?: (value: string) => void;
   placeholder?: string;
   editorId?: string;
-  compact?: boolean;
+  height?: number;
   onFocus?: () => void;
 }
 
@@ -38,7 +38,7 @@ export default function MarkdownEditor({
   onChange,
   placeholder,
   editorId = 'feed',
-  compact = false,
+  height = 420,
   onFocus,
 }: Props) {
   return (
@@ -51,7 +51,7 @@ export default function MarkdownEditor({
         editorId={editorId}
         preview={false}
         scrollAuto
-        style={{ height: compact ? 200 : 420 }}
+        style={{ height }}
       />
     </div>
   );

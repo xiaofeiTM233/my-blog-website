@@ -16,6 +16,7 @@ import {
 import type { MenuProps } from 'antd';
 import { App as AntdApp, Avatar, Button, Divider, Dropdown, theme } from 'antd';
 import { useState } from 'react';
+import Markdown from '@/components/editor/Markdown';
 import { feedsApi } from '@/lib/api/client';
 import { FEED_TYPE_META } from '@/lib/feeds/constants';
 import { formatFeedTime } from '@/lib/feeds/format';
@@ -23,7 +24,6 @@ import type { FeedListItem } from '@/lib/feeds/types';
 import FeedComments from './FeedComments';
 import FeedEditorModal from './FeedEditorModal';
 import FeedImages from './FeedImages';
-import Markdown from './Markdown';
 import { useInvalidateFeeds } from './mutations';
 
 interface Props {

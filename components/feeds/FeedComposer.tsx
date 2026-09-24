@@ -1,12 +1,12 @@
 'use client';
 
-import { PictureOutlined, UserOutlined } from '@ant-design/icons';
+import { ExpandAltOutlined, PictureOutlined, UserOutlined } from '@ant-design/icons';
 import { App as AntdApp, Avatar, Button, Select, Space, Tooltip, Typography, theme } from 'antd';
+import Link from 'next/link';
 import { useState } from 'react';
 import { feedsApi } from '@/lib/api/client';
 import type { FeedType } from '@/lib/feeds/constants';
 import { FEED_TYPE_META, FEED_TYPES } from '@/lib/feeds/constants';
-import MarkdownEditor from './MarkdownEditor';
 
 interface Props {
   channels: string[];
@@ -30,6 +30,12 @@ export default function FeedComposer({ channels, onCreated }: Props) {
   const [submitting, setSubmitting] = useState(false);
 
   const activeChannel = channel ?? channels[0];
+
+  const autoSize = (el: HTMLTextAreaElement | null) => {
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  };
 
   const reset = () => {
     setTitle('');
@@ -95,13 +101,15 @@ export default function FeedComposer({ channels, onCreated }: Props) {
               onChange={(e) => setTitle(e.target.value)}
             />
           )}
-          <MarkdownEditor
+          <textarea
+            ref={autoSize}
+            className="composer__area"
+            rows={1}
             value={body}
-            onChange={setBody}
-            editorId="composer"
-            compact
             placeholder="有什么新鲜事想分享给大家？支持 Markdown 语法"
+            spellCheck={false}
             onFocus={() => setExpanded(true)}
+            onChange={(e) => setBody(e.target.value)}
           />
         </div>
       </div>
@@ -150,6 +158,11 @@ export default function FeedComposer({ channels, onCreated }: Props) {
         <Tooltip title="图片上传待接入">
           <Button type="text" size="small" icon={<PictureOutlined />} disabled />
         </Tooltip>
+        <Link href="/editor" style={{ fontSize: 13 }}>
+          <Button type="text" size="small" icon={<ExpandAltOutlined />}>
+            全屏编辑
+          </Button>
+        </Link>
 
         <div style={{ flex: 1 }} />
 
