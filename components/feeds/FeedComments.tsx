@@ -90,7 +90,7 @@ export default function FeedComments({ feedId }: Props) {
               <Avatar size={28} icon={<UserOutlined />} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 12, color: token.colorTextTertiary }}>
-                  {comment.id ?? '匿名'} · {formatDateTime(comment.timestamp)}
+                  {formatDateTime(comment.timestamp)}
                 </div>
                 <div
                   style={{

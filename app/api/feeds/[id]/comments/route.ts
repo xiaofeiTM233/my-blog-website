@@ -1,4 +1,5 @@
 import type { NextRequest } from 'next/server';
+import { CURRENT_ACTOR_ID } from '@/lib/api/actor';
 import { fail, ok } from '@/lib/api/respond';
 import { addComment } from '@/lib/services/feeds';
 
@@ -8,13 +9,9 @@ export async function POST(
 ) {
   try {
     const { id } = await context.params;
-    const body = (await request.json()) as { viewer?: unknown; body?: unknown };
+    const payload = (await request.json()) as { body?: unknown };
     return ok(
-      await addComment(
-        id,
-        typeof body.viewer === 'string' ? body.viewer : '',
-        typeof body.body === 'string' ? body.body : '',
-      ),
+      await addComment(id, CURRENT_ACTOR_ID, typeof payload.body === 'string' ? payload.body : ''),
     );
   } catch (error) {
     return fail(error);

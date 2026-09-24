@@ -15,7 +15,7 @@ import 'dayjs/locale/zh-cn';
 dayjs.locale('zh-cn');
 
 const menuData: MenuDataItem[] = [
-  { path: '/feeds', name: '动态流', icon: <UnorderedListOutlined /> },
+  { path: '/feeds/index', name: '动态流', icon: <UnorderedListOutlined /> },
   { path: '/feeds/manage', name: '内容管理', icon: <ControlOutlined /> },
 ];
 

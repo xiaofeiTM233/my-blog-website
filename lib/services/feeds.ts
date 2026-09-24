@@ -36,7 +36,6 @@ export interface FeedListQuery {
   priority?: string | null;
   tag?: string | null;
   keyword?: string | null;
-  viewer?: string | null;
 }
 
 type StoredDoc = IFeed & {
@@ -123,13 +122,16 @@ const COUNT_PROJECTION = {
   viewCount: { $size: { $ifNull: ['$interaction.views', []] } },
 };
 
-export async function listFeeds(query: FeedListQuery): Promise<FeedListResult> {
+export async function listFeeds(
+  query: FeedListQuery,
+  actorId?: string | null,
+): Promise<FeedListResult> {
   await dbConnect();
 
   const page = readInt(query.page, 1, 1, 10_000);
   const pageSize = readInt(query.pageSize, DEFAULT_PAGE_SIZE, 1, MAX_PAGE_SIZE);
   const match = buildMatch(query);
-  const viewer = query.viewer?.slice(0, 64) ?? '';
+  const actor = actorId?.slice(0, 64) ?? '';
 
   const [total, rows] = await Promise.all([
     Feed.countDocuments(match),
@@ -141,7 +143,7 @@ export async function listFeeds(query: FeedListQuery): Promise<FeedListResult> {
       {
         $project: {
           ...COUNT_PROJECTION,
-          likedByViewer: viewer
+          likedByViewer: actor
             ? {
                 $gt: [
                   {
@@ -149,7 +151,7 @@ export async function listFeeds(query: FeedListQuery): Promise<FeedListResult> {
                       $filter: {
                         input: { $ifNull: ['$interaction.likes', []] },
                         as: 'item',
-                        cond: { $eq: ['$$item.id', viewer] },
+                        cond: { $eq: ['$$item.id', actor] },
                       },
                     },
                   },
@@ -182,7 +184,7 @@ export async function listFeeds(query: FeedListQuery): Promise<FeedListResult> {
   };
 }
 
-export async function getFeed(id: string, viewer?: string | null): Promise<FeedDetail> {
+export async function getFeed(id: string, actorId?: string | null): Promise<FeedDetail> {
   await dbConnect();
   const doc = await Feed.findById(toObjectId(id)).lean().exec();
   if (!doc) throw new FeedError('动态不存在', 404);
@@ -207,7 +209,7 @@ export async function getFeed(id: string, viewer?: string | null): Promise<FeedD
     likeCount: interaction.likes.length,
     commentCount: interaction.comments.length,
     viewCount: interaction.views.length,
-    likedByViewer: viewer ? interaction.likes.some((log) => log.id === viewer) : false,
+    likedByViewer: actorId ? interaction.likes.some((log) => log.id === actorId) : false,
   };
 }
 
@@ -437,9 +439,9 @@ export async function restoreFeed(id: string): Promise<FeedDto | null> {
   return doc ? toFeedDto(doc as unknown as StoredDoc) : null;
 }
 
-export async function setLiked(id: string, viewer: string, liked: boolean) {
+export async function setLiked(id: string, actorId: string, liked: boolean) {
   await dbConnect();
-  const actor = requireString(viewer, 'viewer', 64);
+  const actor = requireString(actorId, 'actorId', 64);
   const objectId = toObjectId(id);
 
   if (liked) {
@@ -463,9 +465,9 @@ export async function setLiked(id: string, viewer: string, liked: boolean) {
   };
 }
 
-export async function addComment(id: string, viewer: string, body: string) {
+export async function addComment(id: string, actorId: string, body: string) {
   await dbConnect();
-  const actor = requireString(viewer, 'viewer', 64);
+  const actor = requireString(actorId, 'actorId', 64);
   const text = requireString(body, 'body', 500);
   const objectId = toObjectId(id);
 
@@ -486,9 +488,9 @@ export async function addComment(id: string, viewer: string, body: string) {
   };
 }
 
-export async function recordView(id: string, viewer: string) {
+export async function recordView(id: string, actorId: string) {
   await dbConnect();
-  const actor = requireString(viewer, 'viewer', 64);
+  const actor = requireString(actorId, 'actorId', 64);
   await Feed.updateOne(
     { _id: toObjectId(id), 'interaction.views.id': { $ne: actor } },
     { $push: { 'interaction.views': { id: actor, timestamp: Math.floor(Date.now() / 1000) } } },

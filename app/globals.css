@@ -37,3 +37,53 @@ body {
     opacity: 0.55;
   }
 }
+
+/* 发布框的标题行（原生 input，不用 antd 外壳） */
+.composer__title {
+  width: 100%;
+  min-width: 0;
+  margin-bottom: 2px;
+  padding: 4px 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.composer__title::placeholder {
+  color: #bfbfbf;
+  font-weight: 400;
+}
+
+/* md-editor-rt 的预览嵌进动态卡片时做紧凑化：排版交给它自带的 preview.css */
+.feed-md {
+  background: transparent;
+}
+
+.md-editor-preview-wrapper.feed-md {
+  padding: 0;
+}
+
+.feed-md .md-editor-preview {
+  background: transparent;
+  color: inherit;
+  font-size: 14px;
+  line-height: 1.75;
+  word-break: break-word;
+}
+
+.feed-md .md-editor-preview > :first-child {
+  margin-top: 0;
+}
+
+.feed-md .md-editor-preview > :last-child {
+  margin-bottom: 0;
+}
+
+.feed-md .md-editor-preview img {
+  max-width: 100%;
+  border-radius: 6px;
+}

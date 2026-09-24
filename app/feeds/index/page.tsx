@@ -1,4 +1,4 @@
-// app/feeds/page.tsx
+// app/feeds/index/page.tsx
 
 import { Skeleton } from 'antd';
 import type { Metadata } from 'next';

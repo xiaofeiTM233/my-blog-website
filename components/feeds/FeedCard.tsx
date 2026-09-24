@@ -1,21 +1,30 @@
 'use client';
 
 import {
+  DeleteOutlined,
   DownOutlined,
+  EditOutlined,
+  EllipsisOutlined,
   EyeOutlined,
   LikeFilled,
   LikeOutlined,
   MessageOutlined,
+  ShareAltOutlined,
   UpOutlined,
   UserOutlined,
 } from '@ant-design/icons';
-import { Avatar, Divider, theme } from 'antd';
+import type { MenuProps } from 'antd';
+import { App as AntdApp, Avatar, Button, Divider, Dropdown, theme } from 'antd';
 import { useState } from 'react';
+import { feedsApi } from '@/lib/api/client';
 import { FEED_TYPE_META } from '@/lib/feeds/constants';
 import { formatFeedTime } from '@/lib/feeds/format';
 import type { FeedListItem } from '@/lib/feeds/types';
 import FeedComments from './FeedComments';
+import FeedEditorModal from './FeedEditorModal';
 import FeedImages from './FeedImages';
+import Markdown from './Markdown';
+import { useInvalidateFeeds } from './mutations';
 
 interface Props {
   feed: FeedListItem;
@@ -43,16 +52,65 @@ const ICON_STYLE = { fontSize: 18 } as const;
 
 export default function FeedCard({ feed, onToggleLike, likePending }: Props) {
   const { token } = theme.useToken();
+  const { message, modal } = AntdApp.useApp();
+  const invalidateFeeds = useInvalidateFeeds();
   const [expanded, setExpanded] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [editing, setEditing] = useState(false);
 
   const typeMeta = FEED_TYPE_META[feed.meta.type] ?? FEED_TYPE_META.other;
   const body = feed.content.body ?? feed.content.summary ?? '';
   const needsClamp = body.length > CLAMP_LENGTH;
-  const shownBody = needsClamp && !expanded ? `${body.slice(0, CLAMP_LENGTH)}…` : body;
+
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}/feeds/index#feed-${feed._id}`);
+      void message.success('链接已复制');
+    } catch {
+      void message.error('浏览器拒绝了剪贴板访问，请手动复制地址栏');
+    }
+  };
+
+  const confirmDelete = () => {
+    modal.confirm({
+      title: '删除这条动态？',
+      content: '软删除，之后可以在「内容管理」里恢复。',
+      okText: '删除',
+      okButtonProps: { danger: true },
+      onOk: async () => {
+        try {
+          await feedsApi.remove(feed._id);
+          invalidateFeeds();
+          void message.success('已删除');
+        } catch (error) {
+          void message.error((error as Error).message);
+        }
+      },
+    });
+  };
+
+  const menuItems: MenuProps['items'] = [
+    { key: 'edit', icon: <EditOutlined />, label: '编辑' },
+    {
+      key: 'comments',
+      icon: <MessageOutlined />,
+      label: showComments ? '收起评论' : '查看评论',
+    },
+    { key: 'share', icon: <ShareAltOutlined />, label: '复制链接' },
+    { type: 'divider' },
+    { key: 'delete', icon: <DeleteOutlined />, label: '删除', danger: true },
+  ];
+
+  const onMenuClick: MenuProps['onClick'] = ({ key }) => {
+    if (key === 'edit') setEditing(true);
+    else if (key === 'comments') setShowComments((prev) => !prev);
+    else if (key === 'share') void copyLink();
+    else if (key === 'delete') confirmDelete();
+  };
 
   return (
     <article
+      id={`feed-${feed._id}`}
       style={{
         background: token.colorBgContainer,
         borderRadius: token.borderRadiusLG,
@@ -77,6 +135,13 @@ export default function FeedCard({ feed, onToggleLike, likePending }: Props) {
             <span style={{ color: typeMeta.color }}>{typeMeta.label}</span>
           </div>
         </div>
+        <Dropdown
+          menu={{ items: menuItems, onClick: onMenuClick }}
+          trigger={['click']}
+          placement="bottomRight"
+        >
+          <Button type="text" size="small" icon={<EllipsisOutlined />} />
+        </Dropdown>
       </header>
 
       <div style={{ marginTop: 10 }}>
@@ -84,9 +149,23 @@ export default function FeedCard({ feed, onToggleLike, likePending }: Props) {
           <div style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.6 }}>{feed.content.title}</div>
         )}
 
-        {shownBody && (
-          <div style={{ marginTop: 4, fontSize: 14, lineHeight: 1.75, whiteSpace: 'pre-wrap' }}>
-            {shownBody}
+        {body && (
+          <div style={{ marginTop: 4 }}>
+            <div
+              className="feed-md"
+              style={
+                needsClamp && !expanded
+                  ? {
+                      maxHeight: 140,
+                      overflow: 'hidden',
+                      WebkitMaskImage: 'linear-gradient(180deg,#000 60%,transparent)',
+                      maskImage: 'linear-gradient(180deg,#000 60%,transparent)',
+                    }
+                  : undefined
+              }
+            >
+              <Markdown source={body} editorId={`feed-${feed._id}`} />
+            </div>
             {needsClamp && (
               <button
                 type="button"
@@ -182,6 +261,12 @@ export default function FeedCard({ feed, onToggleLike, likePending }: Props) {
       </div>
 
       {showComments && <FeedComments feedId={feed._id} />}
+
+      <FeedEditorModal
+        target={editing ? feed : null}
+        onClose={() => setEditing(false)}
+        onSaved={invalidateFeeds}
+      />
     </article>
   );
 }

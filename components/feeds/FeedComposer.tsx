@@ -1,21 +1,12 @@
 'use client';
 
 import { PictureOutlined, UserOutlined } from '@ant-design/icons';
-import {
-  App as AntdApp,
-  Avatar,
-  Button,
-  Input,
-  Select,
-  Space,
-  Tooltip,
-  Typography,
-  theme,
-} from 'antd';
+import { App as AntdApp, Avatar, Button, Select, Space, Tooltip, Typography, theme } from 'antd';
 import { useState } from 'react';
 import { feedsApi } from '@/lib/api/client';
 import type { FeedType } from '@/lib/feeds/constants';
 import { FEED_TYPE_META, FEED_TYPES } from '@/lib/feeds/constants';
+import MarkdownEditor from './MarkdownEditor';
 
 interface Props {
   channels: string[];
@@ -96,23 +87,21 @@ export default function FeedComposer({ channels, onCreated }: Props) {
         <Avatar size={44} icon={<UserOutlined />} />
         <div style={{ flex: 1, minWidth: 0 }}>
           {expanded && (
-            <Input
-              variant="borderless"
+            <input
+              className="composer__title"
               placeholder="添加标题（可选）"
               maxLength={200}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              style={{ fontSize: 16, fontWeight: 600, paddingInline: 0, marginBottom: 2 }}
             />
           )}
-          <Input.TextArea
-            variant="borderless"
-            autoSize={{ minRows: expanded ? 3 : 1, maxRows: 10 }}
-            placeholder="有什么新鲜事想分享给大家？"
+          <MarkdownEditor
             value={body}
+            onChange={setBody}
+            editorId="composer"
+            compact
+            placeholder="有什么新鲜事想分享给大家？支持 Markdown 语法"
             onFocus={() => setExpanded(true)}
-            onChange={(e) => setBody(e.target.value)}
-            style={{ paddingInline: 0, fontSize: 15, lineHeight: 1.7 }}
           />
         </div>
       </div>

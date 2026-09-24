@@ -1,12 +1,12 @@
 import type { NextRequest } from 'next/server';
+import { CURRENT_ACTOR_ID } from '@/lib/api/actor';
 import { fail, ok } from '@/lib/api/respond';
 import { recordView } from '@/lib/services/feeds';
 
-export async function POST(request: NextRequest, context: RouteContext<'/api/feeds/[id]/view'>) {
+export async function POST(_request: NextRequest, context: RouteContext<'/api/feeds/[id]/view'>) {
   try {
     const { id } = await context.params;
-    const viewer = request.nextUrl.searchParams.get('viewer');
-    await recordView(id, viewer ?? 'anonymous');
+    await recordView(id, CURRENT_ACTOR_ID);
     return ok({ recorded: true });
   } catch (error) {
     return fail(error);

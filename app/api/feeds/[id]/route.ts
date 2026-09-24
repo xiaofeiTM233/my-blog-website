@@ -1,12 +1,13 @@
 import type { NextRequest } from 'next/server';
+import { CURRENT_ACTOR_ID } from '@/lib/api/actor';
 import { requireAdmin } from '@/lib/api/guard';
 import { fail, ok } from '@/lib/api/respond';
 import { FeedError, getFeed, removeFeed, restoreFeed, updateFeed } from '@/lib/services/feeds';
 
-export async function GET(request: NextRequest, context: RouteContext<'/api/feeds/[id]'>) {
+export async function GET(_request: NextRequest, context: RouteContext<'/api/feeds/[id]'>) {
   try {
     const { id } = await context.params;
-    return ok(await getFeed(id, request.nextUrl.searchParams.get('viewer')));
+    return ok(await getFeed(id, CURRENT_ACTOR_ID));
   } catch (error) {
     return fail(error);
   }

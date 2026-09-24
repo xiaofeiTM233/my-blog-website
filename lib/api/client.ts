@@ -18,17 +18,6 @@ export class ApiError extends Error {
   }
 }
 
-const VIEWER_KEY = 'feeds.viewer.id';
-
-export function getViewerId(): string {
-  if (typeof window === 'undefined') return '';
-  const stored = window.localStorage.getItem(VIEWER_KEY);
-  if (stored) return stored;
-  const created = crypto.randomUUID();
-  window.localStorage.setItem(VIEWER_KEY, created);
-  return created;
-}
-
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, {
     ...init,
@@ -59,7 +48,7 @@ export interface FeedQuery {
   keyword?: string;
 }
 
-function toSearch(params: FeedQuery & { viewer?: string }): string {
+function toSearch(params: FeedQuery): string {
   const sp = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
     if (value === undefined || value === null || value === '') continue;
@@ -69,13 +58,11 @@ function toSearch(params: FeedQuery & { viewer?: string }): string {
 }
 
 export const feedsApi = {
-  list: (params: FeedQuery) =>
-    request<FeedListResult>(`/api/feeds?${toSearch({ ...params, viewer: getViewerId() })}`),
+  list: (params: FeedQuery) => request<FeedListResult>(`/api/feeds?${toSearch(params)}`),
 
   options: () => request<FeedOptions>('/api/feeds/options'),
 
-  detail: (id: string) =>
-    request<FeedDetail>(`/api/feeds/${id}?${toSearch({ viewer: getViewerId() })}`),
+  detail: (id: string) => request<FeedDetail>(`/api/feeds/${id}`),
 
   create: (payload: CreateFeedPayload) =>
     request<FeedDto>('/api/feeds', { method: 'POST', body: JSON.stringify(payload) }),
@@ -97,7 +84,7 @@ export const feedsApi = {
   setLiked: (id: string, liked: boolean) =>
     request<{ likeCount: number; likedByViewer: boolean }>(`/api/feeds/${id}/likes`, {
       method: 'POST',
-      body: JSON.stringify({ viewer: getViewerId(), liked }),
+      body: JSON.stringify({ liked }),
     }),
 
   comment: (id: string, body: string) =>
@@ -106,16 +93,11 @@ export const feedsApi = {
       comments: { id?: string; timestamp: number; body?: string }[];
     }>(`/api/feeds/${id}/comments`, {
       method: 'POST',
-      body: JSON.stringify({ viewer: getViewerId(), body }),
+      body: JSON.stringify({ body }),
     }),
 
   recordView: (id: string) =>
-    request<{ recorded: boolean }>(
-      `/api/feeds/${id}/view?viewer=${encodeURIComponent(getViewerId())}`,
-      {
-        method: 'POST',
-      },
-    ),
+    request<{ recorded: boolean }>(`/api/feeds/${id}/view`, { method: 'POST' }),
 };
 
 export const feedKeys = {

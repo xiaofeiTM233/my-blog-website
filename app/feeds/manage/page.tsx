@@ -3,48 +3,20 @@
 import { DeleteOutlined, EditOutlined, RedoOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns } from '@ant-design/pro-components';
 import { PageContainer, ProTable } from '@ant-design/pro-components';
-import {
-  App as AntdApp,
-  AutoComplete,
-  Button,
-  Form,
-  Input,
-  Modal,
-  Popconfirm,
-  Select,
-  Space,
-  Tag,
-  Tooltip,
-} from 'antd';
+import { App as AntdApp, Button, Popconfirm, Tag, Tooltip } from 'antd';
 import { useMemo, useRef, useState } from 'react';
+import FeedEditorModal from '@/components/feeds/FeedEditorModal';
 import { useFeedOptions } from '@/components/feeds/FeedRails';
 import { feedsApi } from '@/lib/api/client';
 import {
-  FEED_PRIORITIES,
   FEED_PRIORITY_META,
   FEED_STATUS_META,
   FEED_STATUSES,
   FEED_TYPE_META,
   FEED_TYPES,
-  type FeedPriority,
-  type FeedStatus,
-  type FeedType,
 } from '@/lib/feeds/constants';
 import { formatDateTime } from '@/lib/feeds/format';
 import type { FeedListItem, FeedListResult } from '@/lib/feeds/types';
-
-interface EditValues {
-  title?: string;
-  summary?: string;
-  body?: string;
-  channel: string;
-  type: FeedType;
-  status: FeedStatus;
-  priority: FeedPriority;
-  tags?: string[];
-  images?: string[];
-  authorName?: string;
-}
 
 const TYPE_VALUE_ENUM = Object.fromEntries(
   FEED_TYPES.map((type) => [
@@ -61,70 +33,12 @@ export default function FeedsManagePage() {
   const { message } = AntdApp.useApp();
   const actionRef = useRef<ActionType>(null);
   const [editing, setEditing] = useState<FeedListItem | 'create' | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [form] = Form.useForm<EditValues>();
 
   const { data: options } = useFeedOptions();
   const channelValueEnum = useMemo(
     () => Object.fromEntries((options?.channels ?? []).map((c) => [c.value, { text: c.value }])),
     [options],
   );
-
-  const openEditor = (record: FeedListItem) => {
-    setEditing(record);
-    form.setFieldsValue({
-      title: record.content.title,
-      summary: record.content.summary,
-      body: record.content.body,
-      channel: record.meta.channel,
-      type: record.meta.type,
-      status: record.meta.status,
-      priority: record.meta.priority ?? 'normal',
-      tags: record.content.tags,
-      images: record.content.images,
-      authorName: record.content.author?.name,
-    });
-  };
-
-  const openCreate = () => {
-    form.resetFields();
-    setEditing('create');
-  };
-
-  const submitEdit = async () => {
-    if (!editing) return;
-    const values = await form.validateFields();
-    setSaving(true);
-    try {
-      const payload = {
-        meta: {
-          channel: values.channel,
-          type: values.type,
-          status: values.status,
-          priority: values.priority,
-        },
-        content: {
-          title: values.title,
-          summary: values.summary,
-          body: values.body,
-          tags: values.tags,
-          images: values.images,
-          author: { name: values.authorName },
-        },
-      };
-
-      if (editing === 'create') await feedsApi.create(payload);
-      else await feedsApi.update(editing._id, payload);
-
-      void message.success(editing === 'create' ? '已创建' : '已保存');
-      setEditing(null);
-      actionRef.current?.reload();
-    } catch (error) {
-      void message.error((error as Error).message);
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const runAction = async (fn: () => Promise<unknown>, successText: string) => {
     try {
@@ -252,7 +166,7 @@ export default function FeedsManagePage() {
           type="link"
           size="small"
           icon={<EditOutlined />}
-          onClick={() => openEditor(record)}
+          onClick={() => setEditing(record)}
         >
           编辑
         </Button>,
@@ -303,7 +217,7 @@ export default function FeedsManagePage() {
         search={{ labelWidth: 'auto' }}
         headerTitle="动态列表"
         toolBarRender={() => [
-          <Button key="create" type="primary" onClick={openCreate}>
+          <Button key="create" type="primary" onClick={() => setEditing('create')}>
             新建动态
           </Button>,
         ]}
@@ -333,77 +247,11 @@ export default function FeedsManagePage() {
         }}
       />
 
-      <Modal
-        open={Boolean(editing)}
-        title={editing === 'create' ? '新建动态' : '编辑动态'}
-        width={680}
-        confirmLoading={saving}
-        onCancel={() => setEditing(null)}
-        onOk={submitEdit}
-        destroyOnHidden
-      >
-        <Form form={form} layout="vertical">
-          <Form.Item name="title" label="标题">
-            <Input placeholder="可选，留空则只显示正文" />
-          </Form.Item>
-          <Form.Item name="summary" label="摘要">
-            <Input.TextArea rows={2} />
-          </Form.Item>
-          <Form.Item name="body" label="正文">
-            <Input.TextArea rows={6} />
-          </Form.Item>
-          <Space orientation="vertical" style={{ width: '100%' }} size={0}>
-            <Space style={{ width: '100%' }} size={12}>
-              <Form.Item
-                name="channel"
-                label="频道"
-                style={{ width: 200 }}
-                rules={[{ required: true }]}
-              >
-                <AutoComplete
-                  options={(options?.channels ?? []).map((c) => ({ value: c.value }))}
-                  placeholder="选择或输入新频道"
-                />
-              </Form.Item>
-              <Form.Item name="type" label="类型" style={{ width: 140 }}>
-                <Select
-                  options={FEED_TYPES.map((t) => ({ value: t, label: FEED_TYPE_META[t].label }))}
-                />
-              </Form.Item>
-              <Form.Item name="status" label="状态" style={{ width: 140 }}>
-                <Select
-                  options={FEED_STATUSES.map((s) => ({
-                    value: s,
-                    label: FEED_STATUS_META[s].label,
-                  }))}
-                />
-              </Form.Item>
-              <Form.Item name="priority" label="优先级" style={{ width: 140 }}>
-                <Select
-                  options={FEED_PRIORITIES.map((p) => ({
-                    value: p,
-                    label: FEED_PRIORITY_META[p].label,
-                  }))}
-                />
-              </Form.Item>
-            </Space>
-            <Form.Item name="tags" label="标签">
-              <Select
-                mode="tags"
-                placeholder="回车确认，可自由输入"
-                open={false}
-                tokenSeparators={[',', ' ']}
-              />
-            </Form.Item>
-            <Form.Item name="images" label="图片链接" extra="每行一个，最多 9 张">
-              <Select mode="tags" open={false} tokenSeparators={[',', ' ']} />
-            </Form.Item>
-            <Form.Item name="authorName" label="作者">
-              <Input />
-            </Form.Item>
-          </Space>
-        </Form>
-      </Modal>
+      <FeedEditorModal
+        target={editing}
+        onClose={() => setEditing(null)}
+        onSaved={() => actionRef.current?.reload()}
+      />
     </PageContainer>
   );
 }
